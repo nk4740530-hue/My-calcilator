@@ -19,15 +19,23 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf automake libtool pkg-config libffi-dev libssl-dev
+          sudo apt-get install -y \
+            git zip unzip openjdk-17-jdk \
+            autoconf automake libtool pkg-config \
+            libffi-dev libssl-dev
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install Android SDK packages
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          sdkmanager "platforms;android-35" \
+                      "build-tools;35.0.0" \
+                      "platform-tools"
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | sdkmanager --licenses
 
       - name: Install Buildozer
         run: |
