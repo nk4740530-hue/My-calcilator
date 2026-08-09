@@ -12,7 +12,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup Python
-      uses: actions/checkout@v5
+      uses: actions/setup-python@v5
       with:
         python-version: "3.11"
 
@@ -30,6 +30,9 @@ jobs:
     - name: Accept Android SDK licenses
       run: |
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+        # Buildozer के लिए भी लाइसेंस डायरेक्टरी को कॉपी करना
+        mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+        cp -r $ANDROID_HOME/licenses/* ~/.buildozer/android/platform/android-sdk/licenses/ || true
 
     - name: Install Android SDK packages
       run: |
@@ -44,7 +47,12 @@ jobs:
 
     - name: Build APK
       run: |
+        # Buildozer को अपने आप लाइसेंस स्वीकार करने के लिए फ़ोर्स करना
+        mkdir -p ~/.android && touch ~/.android/repositories.cfg
         buildozer android debug
+      env:
+        # एनवायरनमेंट वेरिएबल ताकि Buildozer को पता रहे कि लाइसेंस कहाँ हैं
+        ANDROID_HOME: /usr/local/lib/android/sdk
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
