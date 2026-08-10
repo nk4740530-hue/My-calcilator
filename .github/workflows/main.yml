@@ -40,13 +40,14 @@ jobs:
 
       - name: Fix Autoconf Libtool macros
         run: |
-          echo "Checking Libtool..."
+          echo "Checking Autoconf and Libtool..."
 
           libtoolize --version
-          autoreconf --version
+          autoconf --version
+          automake --version
           aclocal --version
 
-          LIBTOOL_M4=$(find /usr -name "libtool.m4" 2>/dev/null | head -n 1)
+          LIBTOOL_M4=$(find /usr/share -name "libtool.m4" 2>/dev/null | head -n 1)
 
           if [ -z "$LIBTOOL_M4" ]; then
             echo "ERROR: libtool.m4 not found"
@@ -56,12 +57,16 @@ jobs:
           echo "Found libtool.m4:"
           echo "$LIBTOOL_M4"
 
-          LIBTOOL_ACLOCAL=$(dirname "$LIBTOOL_M4")
+          LIBTOOL_M4_DIR=$(dirname "$LIBTOOL_M4")
 
-          echo "ACLOCAL_PATH=$LIBTOOL_ACLOCAL" >> "$GITHUB_ENV"
-          export ACLOCAL_PATH="$LIBTOOL_ACLOCAL"
+          echo "ACLOCAL_PATH=$LIBTOOL_M4_DIR" >> "$GITHUB_ENV"
 
-          echo "ACLOCAL_PATH=$ACLOCAL_PATH"
+          mkdir -p "$HOME/.local/share/aclocal"
+
+          cp "$LIBTOOL_M4" \
+            "$HOME/.local/share/aclocal/libtool.m4"
+
+          echo "Libtool macro installed successfully."
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -88,8 +93,12 @@ jobs:
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip
-          python -m pip install buildozer
-          python -m pip install "cython<3"
+
+          python -m pip install \
+            "buildozer==1.5.0"
+
+          python -m pip install \
+            "cython==0.29.36"
 
       - name: Configure Buildozer Android SDK
         run: |
@@ -142,10 +151,22 @@ jobs:
           rm -rf .buildozer
           rm -rf bin
 
-      - name: Build APK
-        env:
-          ACLOCAL_PATH: ${{ env.ACLOCAL_PATH }}
+      - name: Prepare Autoconf environment
         run: |
+          export ACLOCAL_PATH="$HOME/.local/share/aclocal:/usr/share/aclocal"
+
+          echo "ACLOCAL_PATH=$ACLOCAL_PATH" >> "$GITHUB_ENV"
+
+          aclocal --print-ac-dir
+
+          echo "Autoconf environment prepared."
+
+      - name: Build APK
+        run: |
+          echo "Starting Buildozer..."
+
+          export ACLOCAL_PATH="$HOME/.local/share/aclocal:/usr/share/aclocal"
+
           buildozer android debug
 
       - name: Upload APK
