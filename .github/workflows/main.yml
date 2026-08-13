@@ -8,7 +8,6 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -17,7 +16,13 @@ jobs:
         with:
           python-version: "3.11.9"
 
-      - name: Install system dependencies
+      - name: Check Python
+        run: |
+          python --version
+          python -c "import sys; print(sys.version)"
+          which python
+
+      - name: Install dependencies
         run: |
           sudo apt-get update
 
@@ -43,11 +48,40 @@ jobs:
             libncursesw5-dev \
             cmake
 
-      - name: Check Python
+      - name: Check Java
         run: |
-          python --version
-          python -c "import sys; print(sys.version)"
-          which python
+          java -version
+          javac -version
+
+      - name: Fix Autoconf Libtool macros
+        run: |
+          echo "Checking Autoconf and Libtool..."
+
+          libtoolize --version
+          autoconf --version
+          automake --version
+          aclocal --version
+
+          LIBTOOL_M4=$(find /usr/share -name "libtool.m4" 2>/dev/null | head -n 1)
+
+          if [ -z "$LIBTOOL_M4" ]; then
+            echo "ERROR: libtool.m4 not found"
+            exit 1
+          fi
+
+          echo "Found libtool.m4:"
+          echo "$LIBTOOL_M4"
+
+          LIBTOOL_M4_DIR=$(dirname "$LIBTOOL_M4")
+
+          mkdir -p "$HOME/.local/share/aclocal"
+
+          cp "$LIBTOOL_M4" \
+            "$HOME/.local/share/aclocal/libtool.m4"
+
+          echo "ACLOCAL_PATH=$HOME/.local/share/aclocal:/usr/share/aclocal" >> "$GITHUB_ENV"
+
+          echo "Libtool macro installed successfully."
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -71,11 +105,18 @@ jobs:
             "platforms;android-34" \
             "build-tools;34.0.0"
 
-      - name: Check Android SDK
+      - name: Verify Android SDK
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+
+          command -v sdkmanager
           sdkmanager --version
+
+          command -v adb
           adb version
+
+          echo "SDK check completed successfully."
 
       - name: Install Buildozer
         run: |
@@ -87,10 +128,16 @@ jobs:
           python -m pip install \
             "cython==0.29.36"
 
-      - name: Check Buildozer
+      - name: Check Buildozer and Cython
         run: |
+          echo "Buildozer:"
           buildozer --version
+
+          echo "Cython:"
           cython --version
+
+          echo "Python:"
+          python --version
 
       - name: Configure Buildozer Android SDK
         run: |
@@ -115,7 +162,7 @@ jobs:
             exit 1
           fi
 
-          echo "sdkmanager found at:"
+          echo "Using sdkmanager:"
           echo "$SDKMANAGER"
 
           mkdir -p \
@@ -125,43 +172,59 @@ jobs:
             "$SDKMANAGER" \
             "$HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager"
 
-      - name: Clean previous Buildozer files
+      - name: Clean old Buildozer files
         run: |
           rm -rf .buildozer
           rm -rf bin
 
-      - name: Verify build configuration
+      - name: Prepare Autoconf environment
+        run: |
+          export ACLOCAL_PATH="$HOME/.local/share/aclocal:/usr/share/aclocal"
+
+          echo "ACLOCAL_PATH=$ACLOCAL_PATH" >> "$GITHUB_ENV"
+
+          aclocal --print-ac-dir
+
+          echo "Autoconf environment prepared."
+
+      - name: Verify Build Configuration
         run: |
           echo "================================"
-          echo "Python:"
+          echo "PYTHON"
+          echo "================================"
           python --version
 
           echo "================================"
-          echo "Buildozer:"
-          buildozer --version
-
+          echo "CYTHON"
           echo "================================"
-          echo "Cython:"
           cython --version
 
           echo "================================"
-          echo "Android SDK:"
+          echo "BUILDOZER"
+          echo "================================"
+          buildozer --version
+
+          echo "================================"
+          echo "ANDROID SDK"
+          echo "================================"
           echo "$ANDROID_HOME"
 
       - name: Build APK
+        env:
+          ACLOCAL_PATH: ${{ env.ACLOCAL_PATH }}
         run: |
           echo "================================"
           echo "STARTING APK BUILD"
           echo "================================"
 
-          buildozer android clean
+          export ACLOCAL_PATH="$HOME/.local/share/aclocal:/usr/share/aclocal"
 
           buildozer android debug
 
       - name: Check APK
         run: |
           echo "================================"
-          echo "APK FILES:"
+          echo "APK FILES"
           echo "================================"
 
           ls -lah bin/
