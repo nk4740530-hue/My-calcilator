@@ -22,6 +22,12 @@ jobs:
           python -c "import sys; print(sys.version)"
           which python
 
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -32,7 +38,6 @@ jobs:
             unzip \
             wget \
             curl \
-            openjdk-17-jdk \
             autoconf \
             automake \
             libtool \
@@ -50,38 +55,13 @@ jobs:
 
       - name: Check Java
         run: |
+          echo "Java version:"
           java -version
+
+          echo "Javac version:"
           javac -version
 
-      - name: Fix Autoconf Libtool macros
-        run: |
-          echo "Checking Autoconf and Libtool..."
-
-          libtoolize --version
-          autoconf --version
-          automake --version
-          aclocal --version
-
-          LIBTOOL_M4=$(find /usr/share -name "libtool.m4" 2>/dev/null | head -n 1)
-
-          if [ -z "$LIBTOOL_M4" ]; then
-            echo "ERROR: libtool.m4 not found"
-            exit 1
-          fi
-
-          echo "Found libtool.m4:"
-          echo "$LIBTOOL_M4"
-
-          LIBTOOL_M4_DIR=$(dirname "$LIBTOOL_M4")
-
-          mkdir -p "$HOME/.local/share/aclocal"
-
-          cp "$LIBTOOL_M4" \
-            "$HOME/.local/share/aclocal/libtool.m4"
-
-          echo "ACLOCAL_PATH=$HOME/.local/share/aclocal:/usr/share/aclocal" >> "$GITHUB_ENV"
-
-          echo "Libtool macro installed successfully."
+          echo "JAVA_HOME=$JAVA_HOME"
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -116,8 +96,6 @@ jobs:
           command -v adb
           adb version
 
-          echo "SDK check completed successfully."
-
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip setuptools wheel
@@ -130,14 +108,17 @@ jobs:
 
       - name: Check Buildozer and Cython
         run: |
+          echo "Python:"
+          python --version
+
+          echo "Java:"
+          java -version
+
           echo "Buildozer:"
           buildozer --version
 
           echo "Cython:"
           cython --version
-
-          echo "Python:"
-          python --version
 
       - name: Configure Buildozer Android SDK
         run: |
@@ -177,47 +158,13 @@ jobs:
           rm -rf .buildozer
           rm -rf bin
 
-      - name: Prepare Autoconf environment
-        run: |
-          export ACLOCAL_PATH="$HOME/.local/share/aclocal:/usr/share/aclocal"
-
-          echo "ACLOCAL_PATH=$ACLOCAL_PATH" >> "$GITHUB_ENV"
-
-          aclocal --print-ac-dir
-
-          echo "Autoconf environment prepared."
-
-      - name: Verify Build Configuration
-        run: |
-          echo "================================"
-          echo "PYTHON"
-          echo "================================"
-          python --version
-
-          echo "================================"
-          echo "CYTHON"
-          echo "================================"
-          cython --version
-
-          echo "================================"
-          echo "BUILDOZER"
-          echo "================================"
-          buildozer --version
-
-          echo "================================"
-          echo "ANDROID SDK"
-          echo "================================"
-          echo "$ANDROID_HOME"
-
       - name: Build APK
         env:
-          ACLOCAL_PATH: ${{ env.ACLOCAL_PATH }}
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
         run: |
           echo "================================"
           echo "STARTING APK BUILD"
           echo "================================"
-
-          export ACLOCAL_PATH="$HOME/.local/share/aclocal:/usr/share/aclocal"
 
           buildozer android debug
 
