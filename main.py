@@ -1,15 +1,16 @@
 import math
+
 from kivy.app import App
-from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
+from kivy.metrics import dp
 from kivy.graphics import Color, RoundedRectangle
 
 
 class CalcButton(Button):
-    def __init__(self, bg, **kwargs):
+    def __init__(self, bg=(0.12, 0.13, 0.17, 1), **kwargs):
         super().__init__(**kwargs)
 
         self.background_normal = ""
@@ -18,223 +19,166 @@ class CalcButton(Button):
 
         with self.canvas.before:
             Color(*bg)
-            self.shape = RoundedRectangle(
+            self.rect = RoundedRectangle(
                 pos=self.pos,
                 size=self.size,
-                radius=[dp(14)]
+                radius=[dp(15)]
             )
 
-        self.bind(pos=self.update_shape, size=self.update_shape)
+        self.bind(pos=self.update_rect, size=self.update_rect)
 
-    def update_shape(self, *args):
-        self.shape.pos = self.pos
-        self.shape.size = self.size
+    def update_rect(self, *args):
+        self.rect.pos = self.pos
+        self.rect.size = self.size
 
 
 class CalculatorApp(App):
 
     def build(self):
+
         self.expression = ""
-        self.answer = 0
-        self.history = []
-        self.degree_mode = True
+        self.degree = True
 
         root = BoxLayout(
             orientation="vertical",
-            padding=dp(10),
-            spacing=dp(8)
+            padding=dp(12),
+            spacing=dp(10)
         )
 
-        # ---------------- DISPLAY ----------------
-
-        display = BoxLayout(
-            orientation="vertical",
-            size_hint_y=0.22,
-            padding=dp(14)
+        # Display
+        self.display = Label(
+            text="0",
+            font_size=dp(38),
+            color=(1, 1, 1, 1),
+            halign="right",
+            valign="middle",
+            size_hint_y=0.22
         )
 
-        with display.canvas.before:
-            Color(0.06, 0.07, 0.10, 1)
+        with self.display.canvas.before:
+            Color(0.07, 0.08, 0.11, 1)
             self.display_bg = RoundedRectangle(
-                pos=display.pos,
-                size=display.size,
+                pos=self.display.pos,
+                size=self.display.size,
                 radius=[dp(20)]
             )
 
-        display.bind(
+        self.display.bind(
             pos=self.update_display_bg,
             size=self.update_display_bg
         )
 
-        self.history_text = Label(
-            text="",
-            font_size=dp(13),
-            color=(0.55, 0.60, 0.68, 1),
-            halign="right",
-            valign="middle"
-        )
+        root.add_widget(self.display)
 
-        self.screen = Label(
-            text="0",
-            font_size=dp(34),
-            color=(1, 1, 1, 1),
-            halign="right",
-            valign="middle"
-        )
-
-        display.add_widget(self.history_text)
-        display.add_widget(self.screen)
-
-        root.add_widget(display)
-
-        # ---------------- MODE BAR ----------------
-
-        mode = BoxLayout(
-            size_hint_y=0.07,
-            spacing=dp(6)
-        )
-
-        self.mode_btn = CalcButton(
-            (0.36, 0.20, 0.70, 1),
+        # Mode
+        self.mode_button = CalcButton(
             text="DEG",
-            font_size=dp(14)
+            font_size=dp(16),
+            bg=(0.35, 0.20, 0.70, 1),
+            size_hint_y=0.08
         )
 
-        self.mode_btn.bind(
+        self.mode_button.bind(
             on_release=self.change_mode
         )
 
-        hist_btn = CalcButton(
-            (0.14, 0.16, 0.21, 1),
-            text="HISTORY",
-            font_size=dp(13)
-        )
+        root.add_widget(self.mode_button)
 
-        hist_btn.bind(
-            on_release=self.show_history
-        )
-
-        mode.add_widget(self.mode_btn)
-        mode.add_widget(hist_btn)
-
-        root.add_widget(mode)
-
-        # ---------------- BUTTONS ----------------
-
+        # Buttons
         grid = GridLayout(
-            cols=5,
-            spacing=dp(6),
-            size_hint_y=0.71
+            cols=4,
+            spacing=dp(8),
+            size_hint_y=0.70
         )
 
         buttons = [
-            ("AC", "AC", "danger"),
-            ("⌫", "BACK", "func"),
-            ("(", "(", "func"),
-            (")", ")", "func"),
-            ("%", "%", "func"),
+            ("AC", "AC"),
+            ("⌫", "BACK"),
+            ("√", "SQRT"),
+            ("x²", "SQUARE"),
 
-            ("sin", "sin", "func"),
-            ("cos", "cos", "func"),
-            ("tan", "tan", "func"),
-            ("√", "sqrt", "func"),
-            ("x²", "square", "func"),
+            ("sin", "SIN"),
+            ("cos", "COS"),
+            ("tan", "TAN"),
+            ("π", "PI"),
 
-            ("asin", "asin", "func"),
-            ("acos", "acos", "func"),
-            ("atan", "atan", "func"),
-            ("log", "log", "func"),
-            ("ln", "ln", "func"),
+            ("7", "7"),
+            ("8", "8"),
+            ("9", "9"),
+            ("÷", "/"),
 
-            ("π", "pi", "func"),
-            ("e", "e", "func"),
-            ("xʸ", "^", "func"),
-            ("1/x", "inverse", "func"),
-            ("!", "factorial", "func"),
+            ("4", "4"),
+            ("5", "5"),
+            ("6", "6"),
+            ("×", "*"),
 
-            ("7", "7", "num"),
-            ("8", "8", "num"),
-            ("9", "9", "num"),
-            ("÷", "/", "op"),
-            ("×", "*", "op"),
+            ("1", "1"),
+            ("2", "2"),
+            ("3", "3"),
+            ("−", "-"),
 
-            ("4", "4", "num"),
-            ("5", "5", "num"),
-            ("6", "6", "num"),
-            ("−", "-", "op"),
-            ("+", "+", "op"),
+            ("0", "0"),
+            (".", "."),
+            ("%", "%"),
+            ("+", "+"),
 
-            ("1", "1", "num"),
-            ("2", "2", "num"),
-            ("3", "3", "num"),
-            (".", ".", "num"),
-            ("=", "=", "equal"),
-
-            ("0", "0", "num"),
-            ("00", "00", "num"),
-            ("±", "sign", "func"),
-            ("ANS", "ans", "func"),
-            ("EXP", "exp", "func"),
+            ("(", "("),
+            (")", ")"),
+            ("±", "SIGN"),
+            ("=", "=")
         ]
 
-        colors = {
-            "num": (0.10, 0.11, 0.15, 1),
-            "func": (0.15, 0.17, 0.23, 1),
-            "op": (0.34, 0.19, 0.68, 1),
-            "equal": (0.10, 0.50, 0.82, 1),
-            "danger": (0.62, 0.15, 0.20, 1)
-        }
+        for text, value in buttons:
 
-        for text, value, kind in buttons:
+            if value in ["+", "-", "*", "/", "="]:
+                color = (0.35, 0.20, 0.70, 1)
 
-            button = CalcButton(
-                colors[kind],
+            elif value in [
+                "AC", "BACK", "SQRT",
+                "SQUARE", "SIN", "COS",
+                "TAN", "PI", "SIGN"
+            ]:
+                color = (0.16, 0.18, 0.23, 1)
+
+            else:
+                color = (0.10, 0.11, 0.15, 1)
+
+            btn = CalcButton(
                 text=text,
-                font_size=dp(16),
-                color=(1, 1, 1, 1)
+                font_size=dp(20),
+                color=(1, 1, 1, 1),
+                bg=color
             )
 
-            button.bind(
+            btn.bind(
                 on_release=lambda instance, v=value:
                 self.press(v)
             )
 
-            grid.add_widget(button)
+            grid.add_widget(btn)
 
         root.add_widget(grid)
 
         return root
 
-    # ---------------- DISPLAY ----------------
-
     def update_display_bg(self, *args):
-        self.display_bg.pos = args[1]
-        self.display_bg.size = args[2]
-
-    def show(self):
-        text = self.expression
-        text = text.replace("*", "×")
-        text = text.replace("/", "÷")
-        self.screen.text = text if text else "0"
-
-    # ---------------- MODE ----------------
+        self.display_bg.pos = self.display.pos
+        self.display_bg.size = self.display.size
 
     def change_mode(self, instance):
 
-        self.degree_mode = not self.degree_mode
+        self.degree = not self.degree
 
-        instance.text = (
-            "DEG" if self.degree_mode else "RAD"
-        )
-
-    # ---------------- BUTTON PRESS ----------------
+        if self.degree:
+            instance.text = "DEG"
+        else:
+            instance.text = "RAD"
 
     def press(self, value):
 
         if value == "AC":
             self.expression = ""
-            self.screen.text = "0"
-            self.history_text.text = ""
+            self.display.text = "0"
             return
 
         if value == "BACK":
@@ -242,83 +186,63 @@ class CalculatorApp(App):
             self.show()
             return
 
-        if value == "=":
-            self.calculate()
-            return
-
-        if value == "ans":
-            self.expression += str(self.answer)
+        if value == "PI":
+            self.expression += str(math.pi)
             self.show()
             return
 
-        if value == "sign":
-            self.toggle_sign()
-            return
-
-        if value == "pi":
-            self.expression += "pi"
-            self.show()
-            return
-
-        if value == "e":
-            self.expression += "e"
-            self.show()
-            return
-
-        if value == "sqrt":
+        if value == "SQRT":
             self.expression += "sqrt("
             self.show()
             return
 
-        if value == "square":
-            self.expression += "^2"
+        if value == "SQUARE":
+            self.expression += "**2"
             self.show()
             return
 
-        if value == "inverse":
-            self.expression += "inv("
+        if value == "SIN":
+            self.expression += "sin("
             self.show()
             return
 
-        if value == "factorial":
-            self.expression += "!"
+        if value == "COS":
+            self.expression += "cos("
             self.show()
             return
 
-        if value == "exp":
-            self.expression += "*10^"
+        if value == "TAN":
+            self.expression += "tan("
             self.show()
             return
 
-        functions = [
-            "sin", "cos", "tan",
-            "asin", "acos", "atan",
-            "log", "ln"
-        ]
+        if value == "SIGN":
 
-        if value in functions:
-            self.expression += value + "("
-            self.show()
+            if self.expression:
+                if self.expression.startswith("-"):
+                    self.expression = self.expression[1:]
+                else:
+                    self.expression = "-" + self.expression
+
+                self.show()
+
+            return
+
+        if value == "=":
+            self.calculate()
             return
 
         self.expression += value
         self.show()
 
-    # ---------------- SIGN ----------------
+    def show(self):
 
-    def toggle_sign(self):
+        text = self.expression
 
-        if not self.expression:
-            return
+        text = text.replace("*", "×")
+        text = text.replace("/", "÷")
 
-        if self.expression.startswith("-"):
-            self.expression = self.expression[1:]
-        else:
-            self.expression = "-" + self.expression
-
-        self.show()
-
-    # ---------------- CALCULATION ----------------
+        self.display.text = text if text else "0"
 
     def calculate(self):
 
@@ -327,34 +251,50 @@ class CalculatorApp(App):
 
         try:
 
-            original = self.expression
+            expr = self.expression
 
-            expr = original
-
-            # Power
-            expr = expr.replace("^", "**")
-
-            # Constants
-            expr = expr.replace("pi", "math.pi")
-
-            # Square root
             expr = expr.replace("sqrt", "math.sqrt")
 
-            # Log
-            expr = expr.replace("log", "math.log10")
-            expr = expr.replace("ln", "math.log")
+            # Trigonometry
+            if self.degree:
+
+                expr = expr.replace(
+                    "sin(",
+                    "math.sin(math.radians("
+                )
+
+                expr = expr.replace(
+                    "cos(",
+                    "math.cos(math.radians("
+                )
+
+                expr = expr.replace(
+                    "tan(",
+                    "math.tan(math.radians("
+                )
+
+                # Each trig function needs one extra )
+                expr = self.close_trig(expr)
+
+            else:
+
+                expr = expr.replace(
+                    "sin(",
+                    "math.sin("
+                )
+
+                expr = expr.replace(
+                    "cos(",
+                    "math.cos("
+                )
+
+                expr = expr.replace(
+                    "tan(",
+                    "math.tan("
+                )
 
             # Percentage
             expr = expr.replace("%", "/100")
-
-            # Factorial
-            expr = self.replace_factorial(expr)
-
-            # Inverse
-            expr = self.replace_inverse(expr)
-
-            # Trigonometry
-            expr = self.convert_trigonometry(expr)
 
             result = eval(
                 expr,
@@ -366,230 +306,59 @@ class CalculatorApp(App):
 
             if isinstance(result, float):
 
-                if abs(result) < 1e-12:
-                    result = 0
-
                 if result.is_integer():
                     result = int(result)
                 else:
-                    result = round(result, 10)
-
-            self.answer = result
-
-            self.history.append(
-                (original, result)
-            )
-
-            self.history_text.text = (
-                original + " ="
-            )
-
-            self.screen.text = str(result)
+                    result = round(result, 8)
 
             self.expression = str(result)
+            self.display.text = str(result)
 
         except Exception:
-
-            self.screen.text = "Error"
+            self.display.text = "Error"
             self.expression = ""
 
-    # ---------------- TRIGONOMETRY ----------------
+    def close_trig(self, expr):
 
-    def convert_trigonometry(self, expr):
-
-        funcs = [
-            "sin",
-            "cos",
-            "tan",
-            "asin",
-            "acos",
-            "atan"
+        functions = [
+            "math.sin(math.radians(",
+            "math.cos(math.radians(",
+            "math.tan(math.radians("
         ]
 
-        for func in funcs:
+        for function in functions:
 
-            target = func + "("
+            while function in expr:
 
-            while target in expr:
+                start = expr.find(function)
 
-                start = expr.find(target)
+                pos = start + len(function)
 
-                open_pos = start + len(func)
+                depth = 0
 
-                end = self.find_close(
-                    expr,
-                    open_pos
-                )
+                while pos < len(expr):
 
-                if end == -1:
-                    raise ValueError()
+                    if expr[pos] == "(":
+                        depth += 1
 
-                inside = expr[
-                    open_pos + 1:end
-                ]
+                    elif expr[pos] == ")":
 
-                if func in ["sin", "cos", "tan"]:
+                        if depth == 0:
+                            break
 
-                    if self.degree_mode:
+                        depth -= 1
 
-                        replacement = (
-                            "math."
-                            + func
-                            + "(math.radians("
-                            + inside
-                            + "))"
-                        )
-
-                    else:
-
-                        replacement = (
-                            "math."
-                            + func
-                            + "("
-                            + inside
-                            + ")"
-                        )
-
-                else:
-
-                    if self.degree_mode:
-
-                        replacement = (
-                            "math.degrees("
-                            "math."
-                            + func
-                            + "("
-                            + inside
-                            + "))"
-                        )
-
-                    else:
-
-                        replacement = (
-                            "math."
-                            + func
-                            + "("
-                            + inside
-                            + ")"
-                        )
+                    pos += 1
 
                 expr = (
-                    expr[:start]
-                    + replacement
-                    + expr[end + 1:]
+                    expr[:pos + 1]
+                    + ")"
+                    + expr[pos + 1:]
                 )
 
-        return expr
-
-    def find_close(self, text, open_pos):
-
-        depth = 0
-
-        for i in range(
-            open_pos + 1,
-            len(text)
-        ):
-
-            if text[i] == "(":
-                depth += 1
-
-            elif text[i] == ")":
-
-                if depth == 0:
-                    return i
-
-                depth -= 1
-
-        return -1
-
-    # ---------------- FACTORIAL ----------------
-
-    def replace_factorial(self, expr):
-
-        while "!" in expr:
-
-            pos = expr.find("!")
-
-            start = pos - 1
-
-            while start >= 0 and (
-                expr[start].isdigit()
-            ):
-                start -= 1
-
-            number = expr[start + 1:pos]
-
-            if not number:
-                raise ValueError()
-
-            value = math.factorial(
-                int(number)
-            )
-
-            expr = (
-                expr[:start + 1]
-                + str(value)
-                + expr[pos + 1:]
-            )
+                break
 
         return expr
-
-    # ---------------- INVERSE ----------------
-
-    def replace_inverse(self, expr):
-
-        while "inv(" in expr:
-
-            start = expr.find("inv(")
-
-            open_pos = start + 3
-
-            end = self.find_close(
-                expr,
-                open_pos
-            )
-
-            if end == -1:
-                raise ValueError()
-
-            inside = expr[
-                open_pos + 1:end
-            ]
-
-            replacement = (
-                "(1/("
-                + inside
-                + "))"
-            )
-
-            expr = (
-                expr[:start]
-                + replacement
-                + expr[end + 1:]
-            )
-
-        return expr
-
-    # ---------------- HISTORY ----------------
-
-    def show_history(self, instance):
-
-        if not self.history:
-
-            self.history_text.text = (
-                "No history"
-            )
-
-            return
-
-        recent = self.history[-4:]
-
-        text = " | ".join(
-            str(x) + "=" + str(y)
-            for x, y in recent
-        )
-
-        self.history_text.text = text
 
 
 if __name__ == "__main__":
