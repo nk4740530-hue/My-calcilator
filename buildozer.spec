@@ -1,25 +1,30 @@
 [app]
 
-title = My Calculator
-package.name = mycalculator
-package.domain = org.example
+title = Nivas Math Solver
+package.name = nivasmathsolver
+package.domain = com.nivaskumar
 
 source.dir = .
-source.include_exts = py,png,jpg,jpeg,kv
+source.include_exts = py,png,jpg,jpeg,kv,atlas
 
-version = 1.0
+version = 1.0.0
 
-requirements = python3==3.11.9,hostpython3==3.11.9,kivy==2.3.1
+requirements = python3,kivy,sympy
 
 orientation = portrait
 fullscreen = 0
 
-android.api = 34
-android.minapi = 21
-android.archs = arm64-v8a
-android.accept_sdk_license = True
+# Play Store के लिए current Android target
+android.api = 36
+android.minapi = 23
+android.ndk = 29
 
-p4a.bootstrap = sdl2
+android.archs = arm64-v8a, armeabi-v7a
+
+android.permissions = INTERNET
+
+# Release/Play settings
+android.accept_sdk_license = True
 
 [buildozer]
 
