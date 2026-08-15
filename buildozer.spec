@@ -16,7 +16,7 @@ fullscreen = 0
 
 # Play Store के लिए current Android target
 android.api = 36
-android.minapi = 23
+android.minapi = 24
 android.ndk = 29
 
 android.archs = arm64-v8a, armeabi-v7a
