@@ -181,6 +181,12 @@
       border-radius: 10px;
       font-size: 14px;
       font-weight: bold;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+
+    .btn.download {
+      background: #16a34a;
     }
 
     .about {
@@ -263,11 +269,22 @@
 
   <div class="apps" id="appList">
 
+    <!-- SMART CALCULATOR -->
     <div class="card">
       <div class="icon">🧮</div>
       <h3>Smart Calculator</h3>
-      <p>Fast and simple calculator for everyday calculations.</p>
-      <a href="#" class="btn">Open App</a>
+
+      <p>
+        Fast and simple calculator for everyday calculations.
+      </p>
+
+      <!-- APK OPEN/DOWNLOAD -->
+      <a
+        href="mycalculator-1.0-arm64-v8a-debug.apk"
+        class="btn download"
+        download>
+        📥 Download APK
+      </a>
     </div>
 
     <div class="card">
@@ -339,4 +356,4 @@ function searchApps() {
 </script>
 
 </body>
-  </html>
+</html>
