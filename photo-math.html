@@ -1,1 +1,354 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>AppHum Photo Math Solver</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    min-height:100vh;
+    background:linear-gradient(135deg,#eef2ff,#faf5ff);
+    color:#172033;
+}
+
+header{
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:white;
+    padding:18px 7%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.logo{
+    font-size:25px;
+    font-weight:bold;
+}
+
+.back{
+    color:white;
+    text-decoration:none;
+    font-size:14px;
+}
+
+.hero{
+    text-align:center;
+    padding:45px 20px 25px;
+}
+
+.hero h1{
+    font-size:38px;
+    margin-bottom:12px;
+}
+
+.hero h1 span{
+    color:#6d28d9;
+}
+
+.hero p{
+    color:#64748b;
+    line-height:1.6;
+}
+
+.container{
+    max-width:650px;
+    margin:20px auto 60px;
+    padding:0 18px;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:25px;
+    box-shadow:0 15px 40px rgba(0,0,0,.10);
+}
+
+.upload{
+    display:block;
+    text-align:center;
+    padding:38px 20px;
+    border:2px dashed #8b5cf6;
+    border-radius:20px;
+    background:#faf7ff;
+    cursor:pointer;
+}
+
+.upload-icon{
+    font-size:52px;
+    margin-bottom:12px;
+}
+
+.upload h2{
+    font-size:20px;
+    margin-bottom:8px;
+}
+
+.upload p{
+    color:#64748b;
+    font-size:14px;
+}
+
+#photo{
+    display:none;
+}
+
+#preview{
+    width:100%;
+    max-height:320px;
+    object-fit:contain;
+    margin-top:20px;
+    border-radius:18px;
+    display:none;
+}
+
+.solve{
+    width:100%;
+    border:0;
+    padding:16px;
+    margin-top:20px;
+    border-radius:14px;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:white;
+    font-size:17px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.solve:disabled{
+    opacity:.5;
+}
+
+.status{
+    text-align:center;
+    margin-top:18px;
+    color:#64748b;
+}
+
+.result{
+    display:none;
+    margin-top:25px;
+}
+
+.box{
+    background:#f8fafc;
+    padding:18px;
+    border-radius:16px;
+    margin-bottom:14px;
+}
+
+.box h3{
+    color:#5b21b6;
+    margin-bottom:10px;
+}
+
+.answer{
+    font-size:22px;
+    font-weight:bold;
+}
+
+.solution{
+    color:#475569;
+    line-height:1.7;
+    white-space:pre-wrap;
+}
+
+footer{
+    background:#111827;
+    color:#94a3b8;
+    text-align:center;
+    padding:25px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">🚀 AppHum</div>
+
+<a href="index.html" class="back">
+← Back to AppHum
+</a>
+
+</header>
+
+
+<section class="hero">
+
+<h1>📷 <span>Photo Math Solver</span></h1>
+
+<p>
+गणित के सवाल की फोटो upload करें और solution प्राप्त करें।
+</p>
+
+</section>
+
+
+<div class="container">
+
+<div class="card">
+
+<label class="upload" for="photo">
+
+<div class="upload-icon">📸</div>
+
+<h2>Question की Photo चुनें</h2>
+
+<p>
+Camera या Gallery से फोटो चुनने के लिए tap करें
+</p>
+
+<input
+type="file"
+id="photo"
+accept="image/*"
+>
+
+</label>
+
+
+<img
+id="preview"
+alt="Question Preview"
+>
+
+
+<button
+id="solveBtn"
+class="solve"
+disabled
+>
+✨ Solve Question
+</button>
+
+
+<div id="status" class="status">
+पहले question की photo चुनें।
+</div>
+
+
+<div id="result" class="result">
+
+<div class="box">
+
+<h3>📝 Question</h3>
+
+<div id="question">
+-
+</div>
+
+</div>
+
+
+<div class="box">
+
+<h3>✅ Answer</h3>
+
+<div id="answer" class="answer">
+-
+</div>
+
+</div>
+
+
+<div class="box">
+
+<h3>📚 Step-by-Step Solution</h3>
+
+<div id="solution" class="solution">
+-
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<footer>
+
+© 2026 AppHum — Photo Math Solver
+
+</footer>
+
+
+<script>
+
+const photo =
+document.getElementById("photo");
+
+const preview =
+document.getElementById("preview");
+
+const solveBtn =
+document.getElementById("solveBtn");
+
+const status =
+document.getElementById("status");
+
+photo.addEventListener("change", function(){
+
+    const file = this.files[0];
+
+    if(!file) return;
+
+    preview.src =
+    URL.createObjectURL(file);
+
+    preview.style.display =
+    "block";
+
+    solveBtn.disabled =
+    false;
+
+    status.textContent =
+    "✅ Photo तैयार है। अब Solve Question दबाएँ।";
+
+});
+
+
+solveBtn.addEventListener("click", function(){
+
+    if(!photo.files[0]) return;
+
+    status.textContent =
+    "⏳ Question process किया जा रहा है...";
+
+    document.getElementById("result")
+    .style.display = "block";
+
+    document.getElementById("question")
+    .textContent =
+    "Photo successfully uploaded ✅";
+
+    document.getElementById("answer")
+    .textContent =
+    "AI connection अभी बाकी है";
+
+    document.getElementById("solution")
+    .textContent =
+    "अगले चरण में AI Vision backend जोड़ने के बाद यह photo में मौजूद गणित के सवाल को पढ़कर step-by-step solution देगा।";
+
+    status.textContent =
+    "📸 Photo तैयार है।";
+
+});
+
+</script>
+
+</body>
+  </html>
