@@ -9,7 +9,7 @@ source.include_exts = py,png,jpg,jpeg,kv,atlas
 
 version = 1.0.0
 
-requirements = python3==3.14.2, kivy, sympy
+requirements = python3==3.14.2, hostpython3==3.11.9, kivy, sympy
 
 
 orientation = portrait
