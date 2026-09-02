@@ -1,61 +1,66 @@
-import os
-import base64
-
 from flask import Flask, request, jsonify
 from google import genai
-from google.genai import types
+from PIL import Image
+import io
+import os
 
 app = Flask(__name__)
 
-# API key environment variable से आएगी
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+# API key GitHub code में मत लिखना।
+# इसे hosting service में GEMINI_API_KEY नाम से Secret/Environment Variable में डालना है।
+api_key = os.environ.get("GEMINI_API_KEY")
+
+if not api_key:
+    raise RuntimeError("GEMINI_API_KEY is not configured")
+
+client = genai.Client(api_key=api_key)
+
 
 @app.route("/")
 def home():
-    return "AppHum AI Math Backend is running"
+    return "AppHum Photo Math Backend is running!"
+
 
 @app.route("/solve", methods=["POST"])
 def solve():
     try:
         if "image" not in request.files:
-            return jsonify({"error": "Photo नहीं मिली"}), 400
+            return jsonify({"error": "Photo upload नहीं हुई"}), 400
 
-        image = request.files["image"]
+        file = request.files["image"]
 
-        image_bytes = image.read()
+        if file.filename == "":
+            return jsonify({"error": "कोई photo select नहीं की गई"}), 400
 
-        mime_type = image.mimetype or "image/jpeg"
+        image = Image.open(io.BytesIO(file.read()))
 
         prompt = """
-तुम AppHum के AI Math Solver हो।
+You are a helpful math tutor.
 
-इस फोटो में दिए गए गणित के सवाल को ध्यान से पढ़ो।
+Look carefully at the uploaded image and read the math question.
 
-उत्तर इस format में दो:
+Solve the question correctly.
+
+Give the response in Hindi.
+
+Use this format:
 
 Question:
-सवाल को लिखो।
+[question you read]
 
 Solution:
-सवाल को step-by-step हल करो।
+[step-by-step solution]
 
 Final Answer:
-अंतिम उत्तर साफ-साफ बताओ।
+[final answer]
 
-अगर फोटो में गणित का सवाल साफ नहीं दिखाई देता,
-तो बताओ कि फोटो दोबारा साफ तरीके से upload करें।
-
-उत्तर हिंदी में दो।
+If the image is not a math question, say:
+"यह math question की photo नहीं है।"
 """
-
-        image_part = types.Part.from_bytes(
-            data=image_bytes,
-            mime_type=mime_type
-        )
 
         response = client.models.generate_content(
             model="gemini-3.7-flash",
-            contents=[image_part, prompt]
+            contents=[prompt, image]
         )
 
         return jsonify({
