@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+qq<!DOCTYPE html>
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
@@ -352,3 +352,46 @@ solveBtn.addEventListener("click", function(){
 
 </body>
   </html>
+
+<script>
+async function solvePhoto() {
+    const input = document.getElementById("photoInput");
+    const result = document.getElementById("result");
+
+    if (!input.files || input.files.length === 0) {
+        result.innerHTML = "पहले math question की photo select करें।";
+        return;
+    }
+
+    const file = input.files[0];
+
+    result.innerHTML = "Photo पढ़ी जा रही है... कृपया थोड़ा इंतजार करें।";
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+        const response = await fetch("YOUR_BACKEND_URL/solve", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.answer) {
+            result.innerHTML =
+                "<pre style='white-space:pre-wrap;'>" +
+                data.answer +
+                "</pre>";
+        } else {
+            result.innerHTML =
+                "Error: " + (data.error || "Question solve नहीं हो पाया।");
+        }
+
+    } catch (error) {
+        result.innerHTML =
+            "Backend से connection नहीं हो पाया।";
+        console.error(error);
+    }
+}
+</script>
